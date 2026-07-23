@@ -105,6 +105,11 @@ public class Despesa {
     @JoinColumn(name = "empresa_id")
     private EmpresaPropria empresaPropria;
 
+    // Preenchido só quando origem=CONTRATO (pagamento de empreitada); demais origens não referenciam contrato.
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "contrato_id")
+    private Contrato contrato;
+
     @AssertTrue(message = "Despesa deve ser de obra (obra+etapa) ou administrativa (empresaPropria), nunca as duas")
     private boolean isVinculoValido() {
         boolean deObra = obra != null && etapa != null && empresaPropria == null;
@@ -118,5 +123,10 @@ public class Despesa {
             return true;
         }
         return motivoRejeicao != null && !motivoRejeicao.isBlank();
+    }
+
+    @AssertTrue(message = "contrato só deve ser preenchido quando origem=CONTRATO")
+    private boolean isContratoValido() {
+        return (origem == OrigemDespesa.CONTRATO) == (contrato != null);
     }
 }

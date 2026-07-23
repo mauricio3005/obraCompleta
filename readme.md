@@ -300,8 +300,8 @@ Registros financeiros importantes (despesas, recebimentos, contratos, folhas, et
 ## 11. Anexos e arquivos
 
 Upload aplicável a: contrato assinado da obra, documentos de aditivo, comprovantes de despesa (NF, recibo), comprovantes de transferência, comprovantes de prestação de contas, logos de clientes/empresas.
-- Armazenamento seguro, acesso só para usuários autorizados
-- Links de acesso com **prazo de validade curto** (URLs assinadas/expiráveis) — sem links públicos permanentes.
+- Armazenamento em bucket (S3-compatível ou equivalente).
+- Campo simples de URL/chave do objeto no bucket — **sem** geração de link assinado/expirável; link direto e estável, acesso controlado pela autorização normal da aplicação (não por expiração de URL).
 
 ---
 
