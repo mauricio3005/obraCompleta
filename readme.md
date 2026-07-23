@@ -41,11 +41,18 @@ Quem recebe pagamento em uma despesa.
 - contato, CNPJ ou CPF, telefone, email
 
 ### Funcionario
-Vínculo de trabalho remunerado, associado a uma `Pessoa`. Dois tipos:
-- **Funcionário de folha base**: só aparece na folha de pagamento; não movimenta dinheiro do sistema.
-- **Funcionário ativo (gestor de caixa)**: recebe transferências para gerir gastos em campo; precisa prestar contas.
+Vínculo de trabalho remunerado, associado a uma `Pessoa`. `tipo`: FOLHA_BASE | GESTOR_CAIXA — define a natureza do vínculo (não é só um rótulo, muda qual caixa é debitado):
+- **FOLHA_BASE**: só aparece na folha de pagamento de uma obra; não tem login nem movimenta dinheiro do sistema. Custo sempre cai como despesa **da obra** (via `VinculoObra` + `FolhaPagamento`, origem=FOLHA).
+- **GESTOR_CAIXA**: tem login, recebe transferências para gerir gastos em campo, precisa prestar contas. O próprio salário/pró-labore dele é despesa **administrativa da empresa** (via `VinculoEmpresa`) — é uma pessoa da empresa, não da obra. O dinheiro que ele movimenta em campo só vira despesa da obra depois de aprovada a prestação de contas (origem=PRESTACAO_CONTAS); nunca é contabilizado como pagamento a ele mesmo.
 
-**Vínculos múltiplos**: uma mesma pessoa pode ter vínculos diferentes em empresas diferentes (vínculo empregatício) e em obras diferentes (vínculo operacional/função), cada vínculo com sua própria função e valor de pagamento (ex.: mesma pessoa é "Mestre" fixo em uma obra e "Pedreiro" por diária em outra). Modelar como entidade de associação Pessoa↔Obra (ou Pessoa↔Empresa) com função e regra de pagamento próprias, não como atributo direto da Pessoa.
+**Vínculos de pagamento** (entidades de associação — função e regra de pagamento não são atributo direto da Pessoa/Funcionario):
+- **VinculoObra** (Funcionario↔Obra): função + regra de pagamento (DIARIA | FIXO | METRO_QUADRADO) + valor. Alimenta a `FolhaPagamento`, gera despesa da obra. Uso típico do FOLHA_BASE; um GESTOR_CAIXA também pode ter (ex.: além do salário fixo pela empresa, também trabalha por diária em alguma obra específica).
+- **VinculoEmpresa** (Funcionario↔EmpresaPropria): função + salário. Gera despesa administrativa da empresa. Uso típico e exclusivo na prática do GESTOR_CAIXA — FOLHA_BASE não tem esse vínculo, é 100% amarrado a obra(s).
+
+Uma mesma pessoa pode acumular múltiplos `VinculoObra` em obras diferentes, cada um com sua própria função e regra de pagamento (ex.: mesma pessoa é "Mestre" fixo em uma obra e "Pedreiro" por diária em outra).
+
+### DesignacaoGestorObra
+Não é vínculo de pagamento, é autorização: liga um `Funcionario` do tipo GESTOR_CAIXA às obras onde ele pode transferir/prestar contas e às quais tem acesso no sistema (row-level — ver seção 12).
 
 ---
 
@@ -328,7 +335,7 @@ Escopo restrito a obras designadas.
 
 **Restrições**: só vê obras designadas; nunca aprova nada; não vê dados de outras obras/empresas.
 
-→ Nível de autorização deve ser aplicado por linha (row-level: obra designada) e não só por role — considerar tabela de designação Gestor↔Obra.
+→ Nível de autorização deve ser aplicado por linha (row-level: obra designada) e não só por role — tabela de designação Gestor↔Obra (`DesignacaoGestorObra`).
 
 ---
 
@@ -377,4 +384,5 @@ Escopo restrito a obras designadas.
 - **Sub-contas (auto-relacionamento em ContaBancaria)** — cuidado com cálculo recursivo de saldo total; se houver mais de um nível de sub-conta, decidir se o modelo permite hierarquia arbitrária ou só 1 nível (o documento original sugere só 1 nível: conta principal → sub-contas).
 - **Contrato↔Etapa** é N:N (um contrato pode cobrir várias etapas) — precisa de tabela de junção.
 - **Despesa.origem** é um enum fechado (MANUAL, CONTRATO, PRESTACAO_CONTAS, FOLHA) usado para rastreabilidade — não deve ser alterável após a criação.
-- **Autorização por linha** para GESTOR_DE_CAIXA (obras designadas) — implementar via tabela de designação, checada no service/`@PreAuthorize` customizado, não só por role simples do Spring Security.
+- **Autorização por linha** para GESTOR_DE_CAIXA (obras designadas) — implementar via `DesignacaoGestorObra`, checada no service/`@PreAuthorize` customizado, não só por role simples do Spring Security.
+- **Funcionario.tipo define o circuito financeiro, não só o papel de acesso** — FOLHA_BASE só tem `VinculoObra` (despesa de obra via folha); GESTOR_CAIXA tem `VinculoEmpresa` (despesa administrativa, seu próprio salário) e pode adicionalmente ter `VinculoObra` (ex.: também trabalha por diária em alguma obra). Não confundir o pagamento do gestor com o dinheiro que ele movimenta em campo (esse só vira despesa de obra via `PrestacaoContas` aprovada).
