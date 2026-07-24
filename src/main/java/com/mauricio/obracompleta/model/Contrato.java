@@ -33,7 +33,7 @@ import java.util.Set;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Contrato {
+public class Contrato extends RegistroFinanceiro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

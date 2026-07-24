@@ -33,7 +33,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DespesaRecorrente {
+public class DespesaRecorrente extends RegistroFinanceiro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

@@ -34,7 +34,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Recebimento {
+public class Recebimento extends RegistroFinanceiro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)

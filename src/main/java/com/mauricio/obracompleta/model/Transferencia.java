@@ -1,10 +1,7 @@
 package com.mauricio.obracompleta.model;
 
-import com.mauricio.obracompleta.model.enums.TipoAditivo;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -12,10 +9,8 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
-import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
-import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -26,13 +21,13 @@ import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
-@Table(name = "aditivo")
+@Table(name = "transferencia")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Aditivo extends RegistroFinanceiro {
+public class Transferencia extends RegistroFinanceiro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -40,27 +35,28 @@ public class Aditivo extends RegistroFinanceiro {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "contrato_id", nullable = false)
-    private Contrato contrato;
+    @JoinColumn(name = "conta_origem_id", nullable = false)
+    private ContaBancaria contaOrigem;
 
     @NotNull
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private TipoAditivo tipo;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "conta_destino_id", nullable = false)
+    private ContaBancaria contaDestino;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "obra_id")
+    private Obra obra;
 
     @NotNull
     @Positive
     @Column(nullable = false, precision = 15, scale = 2)
     private BigDecimal valor;
 
-    @NotBlank
-    @Size(min = 20)
-    @Column(nullable = false, columnDefinition = "TEXT")
-    private String descricaoJustificativa;
-
     @NotNull
     @Column(nullable = false)
     private LocalDate data;
 
-    private String anexoUrl;
+    private String descricao;
+
+    private String comprovanteUrl;
 }

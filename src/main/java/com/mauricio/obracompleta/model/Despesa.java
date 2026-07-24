@@ -34,7 +34,7 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Despesa {
+public class Despesa extends RegistroFinanceiro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -110,6 +110,16 @@ public class Despesa {
     @JoinColumn(name = "contrato_id")
     private Contrato contrato;
 
+    // Preenchida só quando origem=PRESTACAO_CONTAS (gerada ao aprovar a prestação de contas do gestor).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "prestacao_contas_id")
+    private PrestacaoContas prestacaoContas;
+
+    // Preenchida só quando origem=FOLHA (gerada ao fechar a folha, 1 despesa por linha/funcionário).
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "linha_folha_pagamento_id")
+    private LinhaFolhaPagamento linhaFolhaPagamento;
+
     @AssertTrue(message = "Despesa deve ser de obra (obra+etapa) ou administrativa (empresaPropria), nunca as duas")
     private boolean isVinculoValido() {
         boolean deObra = obra != null && etapa != null && empresaPropria == null;
@@ -128,5 +138,15 @@ public class Despesa {
     @AssertTrue(message = "contrato só deve ser preenchido quando origem=CONTRATO")
     private boolean isContratoValido() {
         return (origem == OrigemDespesa.CONTRATO) == (contrato != null);
+    }
+
+    @AssertTrue(message = "prestacaoContas só deve ser preenchida quando origem=PRESTACAO_CONTAS")
+    private boolean isPrestacaoContasValida() {
+        return (origem == OrigemDespesa.PRESTACAO_CONTAS) == (prestacaoContas != null);
+    }
+
+    @AssertTrue(message = "linhaFolhaPagamento só deve ser preenchida quando origem=FOLHA")
+    private boolean isLinhaFolhaPagamentoValida() {
+        return (origem == OrigemDespesa.FOLHA) == (linhaFolhaPagamento != null);
     }
 }

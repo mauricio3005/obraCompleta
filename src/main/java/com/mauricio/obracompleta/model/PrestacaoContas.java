@@ -1,7 +1,6 @@
 package com.mauricio.obracompleta.model;
 
-import com.mauricio.obracompleta.model.enums.StatusFolhaPagamento;
-import jakarta.persistence.CascadeType;
+import com.mauricio.obracompleta.model.enums.StatusPrestacaoContas;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -12,29 +11,28 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.Table;
 import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Positive;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
 
-// Transições de estado (RASCUNHO -> AGUARDANDO_APROVACAO -> FECHADA/REJEITADA) e a imutabilidade de FECHADA são validadas no service, não aqui (ver readme seção 14).
 @Entity
-@Table(name = "folha_pagamento")
+@Table(name = "prestacao_contas")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class FolhaPagamento extends RegistroFinanceiro {
+public class PrestacaoContas extends RegistroFinanceiro {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -42,37 +40,35 @@ public class FolhaPagamento extends RegistroFinanceiro {
 
     @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "obra_id", nullable = false)
-    private Obra obra;
+    @JoinColumn(name = "transferencia_id", nullable = false)
+    private Transferencia transferencia;
+
+    @NotNull
+    @Positive
+    @Column(nullable = false, precision = 15, scale = 2)
+    private BigDecimal valorGasto;
 
     @NotNull
     @Column(nullable = false)
-    private LocalDate periodoInicio;
+    private LocalDate data;
 
-    @NotNull
+    @NotBlank
     @Column(nullable = false)
-    private LocalDate periodoFim;
+    private String descricao;
+
+    private String comprovanteUrl;
 
     @NotNull
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default
-    private StatusFolhaPagamento status = StatusFolhaPagamento.RASCUNHO;
+    private StatusPrestacaoContas status = StatusPrestacaoContas.PENDENTE;
 
     private String motivoRejeicao;
 
-    @OneToMany(mappedBy = "folha", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private List<LinhaFolhaPagamento> linhas = new ArrayList<>();
-
-    @AssertTrue(message = "periodoFim deve ser igual ou posterior a periodoInicio")
-    private boolean isPeriodoValido() {
-        return periodoInicio == null || periodoFim == null || !periodoFim.isBefore(periodoInicio);
-    }
-
     @AssertTrue(message = "Motivo da rejeição é obrigatório quando status é REJEITADA")
     private boolean isMotivoRejeicaoValido() {
-        if (status != StatusFolhaPagamento.REJEITADA) {
+        if (status != StatusPrestacaoContas.REJEITADA) {
             return true;
         }
         return motivoRejeicao != null && !motivoRejeicao.isBlank();
